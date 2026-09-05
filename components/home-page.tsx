@@ -1,409 +1,289 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import {
-  ArrowRight,
   BellRing,
-  CalendarClock,
-  Camera,
-  ChartNoAxesCombined,
-  Check,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   FileText,
   Home,
-  LockKeyhole,
-  PackageCheck,
   ScanLine,
-  ShieldCheck,
-  Sparkles,
+  Search,
+  Shield,
+  Smartphone,
   Wrench,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import Brand from './brand';
 
-const screens = [
-  { src: '/screens/home.png', label: 'Home dashboard' },
-  { src: '/screens/appliances.png', label: 'Appliance library' },
-  { src: '/screens/appliance-detail.png', label: 'Appliance details' },
-  { src: '/screens/calendar.png', label: 'Maintenance calendar' },
-  { src: '/screens/vault.png', label: 'Warranty vault' },
-  { src: '/screens/insights.png', label: 'Spending insights' },
-] as const;
+const SLIDE_COUNT = 5;
+const screenshots = [
+  { src: '/screens/home.png', alt: 'Homi home dashboard' },
+  { src: '/screens/appliances.png', alt: 'Homi appliance library' },
+  { src: '/screens/appliance-detail.png', alt: 'Homi appliance details' },
+  { src: '/screens/calendar.png', alt: 'Homi maintenance calendar' },
+  { src: '/screens/vault.png', alt: 'Homi warranty vault' },
+  { src: '/screens/insights.png', alt: 'Homi spending insights' },
+];
 
-const featureCards: ReadonlyArray<{ icon: LucideIcon; title: string; text: string; className: string; image?: string }> = [
-  {
-    icon: PackageCheck,
-    title: 'Every appliance, remembered',
-    text: 'Keep the model, serial number, room, purchase date, price, warranty, and notes together.',
-    className: 'feature-card feature-card-wide appliance-feature',
-    image: '/ref.png',
-  },
-  {
-    icon: ScanLine,
-    title: 'Scan a receipt',
-    text: 'Capture a receipt, review the fields Homi finds, then save the appliance and document.',
-    className: 'feature-card scan-feature',
-  },
-  {
-    icon: CalendarClock,
-    title: 'Never miss maintenance',
-    text: 'Schedule service, track completion, and keep a useful history for every appliance.',
-    className: 'feature-card calendar-feature',
-  },
-  {
-    icon: FileText,
-    title: 'A calmer warranty vault',
-    text: 'Receipts, manuals, warranties, and service files stay organized and easy to find.',
-    className: 'feature-card vault-feature',
-    image: '/folder.png',
-  },
-  {
-    icon: ChartNoAxesCombined,
-    title: 'See what home care costs',
-    text: 'Understand maintenance spending by year and category without a spreadsheet.',
-    className: 'feature-card feature-card-wide insight-feature',
-  },
-] as const;
+function useInView(threshold = 0.1) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
-const privacyPoints = [
-  {
-    icon: LockKeyhole,
-    title: 'Local-first by default',
-    text: 'Your household records and imported documents stay in the app on your device.',
-  },
-  {
-    icon: Sparkles,
-    title: 'On-device receipt intelligence',
-    text: 'Supported devices process receipt text locally, with an editable review before anything is saved.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'You stay in control',
-    text: 'Edit or remove records whenever you want. Homi does not sell personal information or serve ads.',
-  },
-] as const;
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        observer.disconnect();
+      }
+    }, { threshold });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [threshold]);
 
-function DeviceFrame() {
+  return { ref, visible };
+}
+
+function StoreIcon({ platform }: { platform: 'apple' | 'google' }) {
+  if (platform === 'apple') {
+    return (
+      <svg viewBox="0 0 24 24" className="h-8 w-8 shrink-0" fill="currentColor" aria-hidden="true">
+        <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 21.99 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 21.99C7.79 22.03 6.8 20.68 5.96 19.47C4.25 16.56 2.93 11.3 4.7 7.72C5.57 5.94 7.36 4.82 9.3 4.8C10.6 4.78 11.83 5.64 12.62 5.64C13.41 5.64 14.92 4.59 16.48 4.76C17.14 4.79 18.93 5.03 20.1 6.7C19.98 6.78 17.75 8.08 17.77 10.82C17.8 14.1 20.58 15.17 20.61 15.18C20.58 15.27 20.1 16.88 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
+      </svg>
+    );
+  }
   return (
-    <div className="device-stage" aria-label="Homi mobile app preview">
-      <div className="hero-orbit orbit-one" />
-      <div className="hero-orbit orbit-two" />
-      <div className="device-frame">
-        <div className="device-speaker" />
-        <Image
-          className="device-screen"
-          src="/onboarding-home.png"
-          width={624}
-          height={1024}
-          alt="Homi onboarding screen showing a miniature home"
-          priority
-        />
+    <svg viewBox="0 0 24 24" className="h-8 w-8 shrink-0" fill="currentColor" aria-hidden="true">
+      <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-1.4l2.583 1.496c.572.331.572.87 0 1.2l-2.583 1.497-2.606-2.597 2.606-2.596zM5.864 3.465L16.8 9.798l-2.302 2.302-8.634-8.635z" />
+    </svg>
+  );
+}
+
+function StoreButtons() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
+      <a href="mailto:hello@rcconstante.dev?subject=Homi%20iOS%20availability" className="inline-flex w-full items-center justify-center gap-4 rounded-2xl bg-gray-900 px-8 py-4 text-base font-semibold text-white transition-colors hover:bg-gray-800 sm:w-auto">
+        <StoreIcon platform="apple" />
+        <span className="text-left"><span className="block text-xs leading-none opacity-70">COMING SOON TO THE</span><span className="block text-base font-bold leading-tight">App Store</span></span>
+      </a>
+      <a href="mailto:hello@rcconstante.dev?subject=Homi%20Android%20availability" className="inline-flex w-full items-center justify-center gap-4 rounded-2xl bg-[#075A39] px-8 py-4 text-base font-semibold text-white transition-colors hover:bg-[#06472e] sm:w-auto">
+        <StoreIcon platform="google" />
+        <span className="text-left"><span className="block text-xs leading-none opacity-70">COMING SOON TO</span><span className="block text-base font-bold leading-tight">Google Play</span></span>
+      </a>
+    </div>
+  );
+}
+
+function HorizontalScreenshots() {
+  const { ref, visible } = useInView(0.15);
+  const [start, setStart] = useState(0);
+  const showCount = 4;
+  const maxStart = screenshots.length - showCount;
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="hide-scrollbar snap-x snap-mandatory overflow-x-auto pb-4">
+        <div className="flex min-w-max gap-1 px-1">
+          {screenshots.map((image, index) => {
+            const inWindow = index >= start && index < start + showCount;
+            return (
+              <div
+                key={image.src}
+                className={`shrink-0 snap-center transition-all duration-700 ease-out ${visible && inWindow ? 'translate-y-0 scale-100 opacity-100' : inWindow ? 'translate-y-8 scale-95 opacity-0' : 'hidden scale-95 opacity-0'}`}
+                style={{ transitionDelay: `${(index - start) * 80}ms` }}
+              >
+                <img src={image.src} alt={image.alt} className="w-[220px] rounded-[1.75rem] shadow-xl shadow-black/5 sm:w-[260px] lg:w-[300px]" loading="lazy" />
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div className="floating-note note-maintenance">
-        <span className="note-icon"><Wrench size={18} /></span>
-        <span><strong>Maintenance</strong><small>Due in 5 days</small></span>
-      </div>
-      <div className="floating-note note-warranty">
-        <span className="note-icon"><ShieldCheck size={18} /></span>
-        <span><strong>Warranty saved</strong><small>Stored locally</small></span>
+      <button onClick={() => setStart((value) => Math.max(value - 1, 0))} disabled={start === 0} className="absolute left-0 top-1/2 z-10 flex h-12 w-12 -translate-x-2 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-700 shadow-lg transition-all hover:scale-105 hover:bg-white disabled:scale-75 disabled:opacity-0" aria-label="Previous screenshots">
+        <ChevronLeft size={24} />
+      </button>
+      <button onClick={() => setStart((value) => Math.min(value + 1, maxStart))} disabled={start >= maxStart} className="absolute right-0 top-1/2 z-10 flex h-12 w-12 translate-x-2 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-700 shadow-lg transition-all hover:scale-105 hover:bg-white disabled:scale-75 disabled:opacity-0" aria-label="Next screenshots">
+        <ChevronRight size={24} />
+      </button>
+      <div className="mt-6 flex items-center justify-center gap-2">
+        {screenshots.map((image, index) => (
+          <button key={image.src} onClick={() => setStart(Math.min(index, maxStart))} className={`h-2 rounded-full transition-colors ${index >= start && index < start + showCount ? 'w-4 bg-[#075A39]' : 'w-2 bg-gray-300'}`} aria-label={`Show screenshot ${index + 1}`} />
+        ))}
       </div>
     </div>
   );
 }
 
-function ScreenGallery() {
-  const railRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
-
-  const move = useCallback((direction: number) => {
-    const next = Math.max(0, Math.min(screens.length - 1, active + direction));
-    setActive(next);
-    railRef.current?.children[next]?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center',
-    });
-  }, [active]);
-
-  return (
-    <div className="screen-gallery">
-      <div className="gallery-rail" ref={railRef}>
-        {screens.map((screen, index) => (
-          <button
-            className={`gallery-device${active === index ? ' active' : ''}`}
-            key={screen.src}
-            onClick={() => setActive(index)}
-            type="button"
-            aria-label={`Show ${screen.label}`}
-          >
-            <Image src={screen.src} width={312} height={555} alt={screen.label} />
-          </button>
-        ))}
-      </div>
-      <div className="gallery-controls">
-        <button type="button" onClick={() => move(-1)} disabled={active === 0} aria-label="Previous app screen">
-          <ChevronLeft size={20} />
-        </button>
-        <div className="gallery-dots" aria-label={`Screen ${active + 1} of ${screens.length}`}>
-          {screens.map((screen, index) => (
-            <button
-              type="button"
-              key={screen.src}
-              className={active === index ? 'active' : ''}
-              onClick={() => {
-                setActive(index);
-                railRef.current?.children[index]?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-              }}
-              aria-label={`Show ${screen.label}`}
-            />
-          ))}
-        </div>
-        <button type="button" onClick={() => move(1)} disabled={active === screens.length - 1} aria-label="Next app screen">
-          <ChevronRight size={20} />
-        </button>
-      </div>
-    </div>
-  );
+function Slide({ children, id }: { children: React.ReactNode; id?: string }) {
+  return <div id={id} className="w-full lg:flex lg:h-screen lg:min-w-[100vw] lg:items-center lg:justify-center lg:overflow-y-auto">{children}</div>;
 }
 
 export default function HomePage() {
-  const pageRef = useRef<HTMLDivElement>(null);
-  const [panel, setPanel] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToSlide = (index: number) => {
+    containerRef.current?.scrollTo({ left: index * window.innerWidth, behavior: 'smooth' });
+  };
 
   useEffect(() => {
-    const root = pageRef.current;
-    if (!root) return;
-
+    const element = containerRef.current;
+    if (!element) return;
     const onScroll = () => {
       if (window.innerWidth < 1024) return;
-      setPanel(Math.round(root.scrollLeft / root.clientWidth));
+      setActiveSlide(Math.max(0, Math.min(Math.round(element.scrollLeft / window.innerWidth), SLIDE_COUNT - 1)));
     };
-
-    root.addEventListener('scroll', onScroll, { passive: true });
-    return () => root.removeEventListener('scroll', onScroll);
+    element.addEventListener('scroll', onScroll, { passive: true });
+    return () => element.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
-    const root = pageRef.current;
-    if (!root) return;
-
-    let destination = root.scrollLeft;
+    const element = containerRef.current;
+    if (!element) return;
+    let target = element.scrollLeft;
+    let current = element.scrollLeft;
     let frame = 0;
     const animate = () => {
-      const distance = destination - root.scrollLeft;
-      if (Math.abs(distance) < 1) {
-        root.scrollLeft = destination;
+      current += (target - current) * 0.1;
+      if (Math.abs(target - current) > 0.5) {
+        element.scrollLeft = current;
+        frame = requestAnimationFrame(animate);
+      } else {
+        element.scrollLeft = target;
         frame = 0;
-        return;
       }
-      root.scrollLeft += distance * 0.12;
-      frame = requestAnimationFrame(animate);
     };
     const onWheel = (event: WheelEvent) => {
-      if (window.innerWidth < 1024 || Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
+      if (window.innerWidth < 1024) return;
       event.preventDefault();
-      destination = Math.max(0, Math.min(root.scrollWidth - root.clientWidth, destination + event.deltaY * 1.7));
+      target = Math.max(0, Math.min(target + (event.deltaY + event.deltaX) * 2, element.scrollWidth - element.clientWidth));
       if (!frame) frame = requestAnimationFrame(animate);
     };
-
-    root.addEventListener('wheel', onWheel, { passive: false });
+    element.addEventListener('wheel', onWheel, { passive: false });
     return () => {
-      root.removeEventListener('wheel', onWheel);
+      element.removeEventListener('wheel', onWheel);
       cancelAnimationFrame(frame);
     };
   }, []);
 
-  const goToPanel = useCallback((index: number) => {
-    const root = pageRef.current;
-    if (!root) return;
-    const target = root.children[index] as HTMLElement | undefined;
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
-  }, []);
-
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
+    const onKey = (event: KeyboardEvent) => {
       if (window.innerWidth < 1024) return;
-      if (event.key === 'ArrowRight') goToPanel(Math.min(4, panel + 1));
-      if (event.key === 'ArrowLeft') goToPanel(Math.max(0, panel - 1));
+      if (event.key === 'ArrowRight') scrollToSlide(Math.min(activeSlide + 1, SLIDE_COUNT - 1));
+      if (event.key === 'ArrowLeft') scrollToSlide(Math.max(activeSlide - 1, 0));
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [goToPanel, panel]);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeSlide]);
+
+  const featureCards = [
+    { icon: Smartphone, title: 'Every appliance, remembered', text: 'Keep model, room, brand, purchase, warranty, and notes together.', wide: true },
+    { icon: ScanLine, title: 'Scan receipts', text: 'Capture a receipt, review the details, and save the appliance.' },
+    { icon: FileText, title: 'Warranty Vault', text: 'Keep receipts, images, and PDFs linked to the right appliance.' },
+    { icon: Search, title: 'Instant search', text: 'Find appliances, rooms, brands, and documents in seconds.', accent: true },
+    { icon: CalendarDays, title: 'Maintenance calendar', text: 'Schedule service and keep upcoming work visible.' },
+    { icon: Shield, title: 'Private and local-first', text: 'Household records stay in app storage on your device.', wide: true },
+  ];
 
   return (
-    <main className="marketing-shell">
-      <header className="site-header">
-        <Brand />
-        <nav aria-label="Primary navigation">
-          <button type="button" onClick={() => goToPanel(2)}>Features</button>
-          <Link href="/privacy/">Privacy</Link>
-          <Link href="/support/">Support</Link>
-          <button className="nav-cta" type="button" onClick={() => goToPanel(4)}>
-            Get Homi <ArrowRight size={16} />
-          </button>
-        </nav>
-      </header>
-
-      <div className="panel-track" ref={pageRef}>
-        <section className="panel hero-panel" id="home">
-          <div className="hero-copy reveal">
-            <div className="eyebrow"><Home size={16} /> One place for the life of your home</div>
-            <h1>Your home remembers <em>everything.</em></h1>
-            <p>
-              Track appliances, manage warranties, scan receipts, and stay ahead of maintenance without losing the details that matter.
-            </p>
-            <div className="hero-actions">
-              <button className="button button-primary" type="button" onClick={() => goToPanel(4)}>
-                Join early access <ArrowRight size={18} />
-              </button>
-              <button className="button button-secondary" type="button" onClick={() => goToPanel(1)}>
-                See the app
-              </button>
+    <main className="relative min-h-screen bg-white text-gray-900 lg:h-screen lg:min-h-0">
+      <div ref={containerRef} className="hide-scrollbar w-full lg:flex lg:h-screen lg:flex-nowrap lg:overflow-x-auto">
+        <Slide id="home">
+          <section className="relative w-full overflow-hidden bg-white">
+            <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-8 lg:pb-20">
+              <div className="flex flex-col items-center justify-center gap-10 lg:flex-row lg:gap-14">
+                <div className="relative order-2 w-72 shrink-0 sm:w-80 lg:order-1 lg:w-[26rem]">
+                  <img src="/screens/home.png" alt="Homi app home dashboard" className="w-full rounded-[2.25rem] border border-gray-100 drop-shadow-2xl" />
+                </div>
+                <div className="order-1 w-full max-w-xl px-2 text-center sm:px-0 lg:order-2 lg:text-left">
+                  <div className="mb-7 flex items-center justify-center gap-3 lg:justify-start">
+                    <img src="/app-icon.png" alt="" className="h-12 w-12 rounded-2xl" />
+                    <span className="text-3xl font-extrabold tracking-tight">Homi</span>
+                  </div>
+                  <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-[#075A39]/10 px-5 py-2 text-sm font-medium text-[#075A39]"><Home size={18} /> Your personal home record</div>
+                  <h1 className="mb-8 text-5xl font-extrabold leading-[1.05] tracking-tight text-gray-900 sm:text-6xl lg:text-[5.25rem]">Your Home.<br /><span className="text-[#075A39]">Remembered.</span><br />Always.</h1>
+                  <p className="mx-auto mb-10 max-w-lg text-xl leading-relaxed text-gray-500 sm:text-2xl lg:mx-0">Track appliances, protect warranties, schedule maintenance, and keep every home document close.</p>
+                  <StoreButtons />
+                </div>
+              </div>
             </div>
-            <div className="hero-proof">
-              <span><Check size={15} /> Local-first</span>
-              <span><Check size={15} /> No ads</span>
-              <span><Check size={15} /> iOS and Android</span>
-            </div>
-          </div>
-          <DeviceFrame />
-        </section>
+          </section>
+        </Slide>
 
-        <section className="panel screens-panel" id="screens">
-          <div className="section-heading centered">
-            <span className="section-kicker">A complete home record</span>
-            <h2>Everything has a place.</h2>
-            <p>Move from today&apos;s priorities to the exact receipt, warranty, or service record in a few taps.</p>
-          </div>
-          <ScreenGallery />
-        </section>
-
-        <section className="panel features-panel" id="features">
-          <div className="features-wrap">
-            <div className="section-heading">
-              <span className="section-kicker">Built for real home ownership</span>
-              <h2>Less searching. More knowing.</h2>
-              <p>Homi turns scattered household details into a useful, living record.</p>
+        <Slide>
+          <section className="w-full bg-white py-24 lg:py-32">
+            <div className="mx-auto max-w-7xl px-4 sm:px-8">
+              <div className="mb-12 text-center">
+                <h2 className="mb-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Built for how you care for home.</h2>
+                <p className="mx-auto max-w-lg text-lg text-gray-500 sm:text-xl">One calm place for appliances, maintenance, warranties, and spending.</p>
+              </div>
+              <HorizontalScreenshots />
             </div>
-            <div className="feature-grid">
-              {featureCards.map((feature) => {
-                const Icon = feature.icon;
+          </section>
+        </Slide>
+
+        <Slide>
+          <section className="mx-auto max-w-6xl px-4 py-24 sm:px-8 lg:py-0">
+            <div className="mb-12">
+              <h2 className="mb-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Home care, simplified.</h2>
+              <p className="max-w-lg text-lg text-gray-500">Everything needed to organize, maintain, and understand your home.</p>
+            </div>
+            <div className="grid auto-rows-[minmax(180px,auto)] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {featureCards.map((card) => {
+                const Icon = card.icon;
                 return (
-                  <article className={feature.className} key={feature.title}>
-                    <span className="feature-icon"><Icon size={21} /></span>
-                    <div>
-                      <h3>{feature.title}</h3>
-                      <p>{feature.text}</p>
-                    </div>
-                    {feature.image ? (
-                      <Image className="feature-image" src={feature.image} width={240} height={240} alt="" />
-                    ) : null}
-                    {feature.title === 'Scan a receipt' ? (
-                      <div className="scan-corners" aria-hidden="true"><Camera size={38} /><span>Ready to scan</span></div>
-                    ) : null}
-                    {feature.title === 'Never miss maintenance' ? (
-                      <div className="mini-schedule" aria-hidden="true">
-                        <span><BellRing size={16} /> Air conditioner filter</span><strong>May 25</strong>
-                      </div>
-                    ) : null}
-                    {feature.title === 'See what home care costs' ? (
-                      <div className="mini-chart" aria-hidden="true">
-                        <span style={{ height: '32%' }} /><span style={{ height: '54%' }} /><span style={{ height: '42%' }} />
-                        <span style={{ height: '78%' }} /><span style={{ height: '60%' }} /><span style={{ height: '92%' }} />
-                      </div>
-                    ) : null}
+                  <article key={card.title} className={`${card.wide ? 'sm:col-span-2' : ''} ${card.accent ? 'bg-[#075A39] text-white' : 'border border-gray-100 bg-white'} flex flex-col justify-between rounded-3xl p-8 transition-shadow hover:shadow-lg`}>
+                    <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${card.accent ? 'bg-white/20' : 'bg-[#075A39]/10'}`}><Icon size={20} className={card.accent ? 'text-white' : 'text-[#075A39]'} /></div>
+                    <div><h3 className="mb-1 text-lg font-bold">{card.title}</h3><p className={`text-sm leading-relaxed ${card.accent ? 'text-white/80' : 'text-gray-500'}`}>{card.text}</p></div>
                   </article>
                 );
               })}
             </div>
-          </div>
-        </section>
+          </section>
+        </Slide>
 
-        <section className="panel privacy-panel" id="privacy">
-          <div className="privacy-art">
-            <div className="privacy-glow" />
-            <Image src="/home-house.png" width={700} height={657} alt="A miniature green-roofed home" />
-            <div className="privacy-badge"><ShieldCheck size={24} /><span><strong>Private by design</strong><small>Your home stays yours</small></span></div>
-          </div>
-          <div className="privacy-copy">
-            <span className="section-kicker light">Designed around trust</span>
-            <h2>Home data belongs at home.</h2>
-            <p className="privacy-intro">Homi is designed to be useful without turning your household into a profile.</p>
-            <div className="privacy-list">
-              {privacyPoints.map((point) => {
-                const Icon = point.icon;
-                return (
-                  <article key={point.title}>
-                    <span><Icon size={20} /></span>
-                    <div><h3>{point.title}</h3><p>{point.text}</p></div>
+        <Slide>
+          <section className="w-full bg-white py-24 lg:py-0">
+            <div className="mx-auto max-w-6xl px-4 sm:px-8">
+              <h2 className="mb-12 text-center text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-left">Designed for everyday home care</h2>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <article className="flex flex-col justify-between rounded-3xl border border-gray-100 bg-white p-10 transition-shadow hover:shadow-lg">
+                  <div><Shield size={32} className="mb-6 text-[#075A39]/40" /><p className="mb-8 text-xl leading-relaxed text-gray-900">Homi is local-first. Appliance records, receipts, documents, and maintenance history remain under your control on your device.</p></div>
+                  <div><p className="text-sm font-semibold text-gray-900">Privacy by design</p><p className="text-xs text-gray-400">No household account required</p></div>
+                </article>
+                <div className="flex flex-col gap-4">
+                  <article className="flex flex-1 flex-col justify-between rounded-3xl border border-gray-100 bg-white p-7 transition-shadow hover:shadow-lg">
+                    <div className="mb-4 flex items-start justify-between"><p className="text-sm font-semibold text-gray-900">Never miss important maintenance</p><BellRing size={20} className="text-[#075A39]" /></div>
+                    <p className="text-sm leading-relaxed text-gray-500">Keep service dates and warranty expirations visible with optional local reminders.</p>
                   </article>
-                );
-              })}
+                  <article className="flex flex-1 flex-col justify-between rounded-3xl border border-gray-100 bg-white p-7 transition-shadow hover:shadow-lg">
+                    <div className="mb-4 flex items-start justify-between"><p className="text-sm font-semibold text-gray-900">Understand the cost of home care</p><Wrench size={20} className="text-[#075A39]" /></div>
+                    <p className="text-sm leading-relaxed text-gray-500">Completed maintenance records turn into useful yearly spending insights by category.</p>
+                  </article>
+                </div>
+              </div>
             </div>
-            <Link className="text-link light" href="/privacy/">Read the privacy policy <ArrowRight size={17} /></Link>
-          </div>
-        </section>
+          </section>
+        </Slide>
 
-        <section className="panel waitlist-panel" id="waitlist">
-          <div className="waitlist-card">
-            <div className="waitlist-copy">
-              <Image src="/app-icon.png" width={70} height={70} alt="Homi app icon" />
-              <span className="section-kicker">Make home care feel lighter</span>
-              <h2>Your home has a lot to remember. Let Homi help.</h2>
-              <p>Join the early access list for launch updates on iOS and Android.</p>
+        <Slide>
+          <footer className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-16 px-4 py-24 sm:px-8 lg:flex-row lg:items-center lg:py-0">
+            <div className="flex-1">
+              <img src="/app-icon.png" alt="Homi" className="mb-6 h-14 w-14 rounded-2xl" />
+              <h2 className="mb-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Your home.<br />Organized. <span className="text-[#075A39]">Always.</span></h2>
+              <p className="mb-8 text-lg text-gray-500">A calmer way to remember what your home needs.</p>
+              <StoreButtons />
             </div>
-            <form
-              className="waitlist-form"
-              name="homi-waitlist"
-              method="POST"
-              action="/thanks/"
-              data-netlify="true"
-              data-netlify-honeypot="bot-field"
-            >
-              <input type="hidden" name="form-name" value="homi-waitlist" />
-              <p className="hidden-field">
-                <label>Do not fill this out: <input name="bot-field" /></label>
-              </p>
-              <label htmlFor="email">Email address</label>
-              <input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
-              <label htmlFor="platform">Your phone</label>
-              <select id="platform" name="platform" defaultValue="">
-                <option value="" disabled>Select a platform</option>
-                <option value="ios">iPhone</option>
-                <option value="android">Android</option>
-                <option value="both">Both</option>
-              </select>
-              <button className="button button-primary" type="submit">Join early access <ArrowRight size={18} /></button>
-              <small>No spam. Only meaningful Homi updates.</small>
-            </form>
-          </div>
-          <footer className="site-footer">
-            <Brand compact />
-            <div className="footer-links">
-              <Link href="/privacy/">Privacy</Link>
-              <Link href="/terms/">Terms</Link>
-              <Link href="/support/">Support</Link>
-              <Link href="/licenses/">Licenses</Link>
-            </div>
-            <p>(c) 2026 Homi. All rights reserved.</p>
+            <nav className="flex flex-col gap-3 text-sm text-gray-400 lg:text-right" aria-label="Footer">
+              <a href="/privacy/" className="transition-colors hover:text-gray-900">Privacy</a>
+              <a href="/terms/" className="transition-colors hover:text-gray-900">Terms</a>
+              <a href="/licenses/" className="transition-colors hover:text-gray-900">Licenses</a>
+              <a href="/support/" className="transition-colors hover:text-gray-900">Support</a>
+              <a href="https://rcconstante.dev" target="_blank" rel="noreferrer" className="mt-2 transition-colors hover:text-gray-900">Developer website</a>
+              <span className="mt-4">© 2026 Homi</span>
+            </nav>
           </footer>
-        </section>
-      </div>
-
-      <div className="panel-pagination" aria-label="Page sections">
-        {['Home', 'App screens', 'Features', 'Privacy', 'Early access'].map((label, index) => (
-          <button
-            className={panel === index ? 'active' : ''}
-            key={label}
-            onClick={() => goToPanel(index)}
-            type="button"
-            aria-label={`Go to ${label}`}
-            aria-current={panel === index ? 'true' : undefined}
-          />
-        ))}
+        </Slide>
       </div>
     </main>
   );
