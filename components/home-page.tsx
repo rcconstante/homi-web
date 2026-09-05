@@ -15,12 +15,12 @@ import {
   Home,
   LockKeyhole,
   PackageCheck,
-  ReceiptText,
   ScanLine,
   ShieldCheck,
   Sparkles,
   Wrench,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Brand from './brand';
 
@@ -33,7 +33,7 @@ const screens = [
   { src: '/screens/insights.png', label: 'Spending insights' },
 ] as const;
 
-const featureCards = [
+const featureCards: ReadonlyArray<{ icon: LucideIcon; title: string; text: string; className: string; image?: string }> = [
   {
     icon: PackageCheck,
     title: 'Every appliance, remembered',
